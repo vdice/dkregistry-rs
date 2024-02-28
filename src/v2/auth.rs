@@ -38,7 +38,7 @@ impl BearerAuth {
         bearer_header_content: WwwAuthenticateHeaderContentBearer,
     ) -> Result<Self> {
         let auth_ep = bearer_header_content.auth_ep(scopes);
-        trace!("authenticate: token endpoint: {}", auth_ep);
+        info!("authenticate: token endpoint: {}", auth_ep);
 
         let url = reqwest::Url::parse(&auth_ep)?;
 
@@ -57,7 +57,7 @@ impl BearerAuth {
 
         let r = auth_req.send().await?;
         let status = r.status();
-        trace!("authenticate: got status {}", status);
+        info!("authenticate: got status {}", status);
         if status != StatusCode::OK {
             return Err(Error::UnexpectedHttpStatus(status));
         }
@@ -76,7 +76,7 @@ impl BearerAuth {
         let mut masked_token = bearer_auth.token.clone();
         masked_token.replace_range(mask_start..mask_end, &"*".repeat(mask_end - mask_start));
 
-        trace!("authenticate: got token: {:?}", masked_token);
+        info!("authenticate: got token: {:?}", masked_token);
 
         Ok(bearer_auth)
     }
@@ -234,7 +234,7 @@ impl Client {
 
         let r = self.build_reqwest(Method::GET, url.clone()).send().await?;
 
-        trace!("GET '{}' status: {:?}", r.url(), r.status());
+        info!("GET '{}' status: {:?}", r.url(), r.status());
         r.headers()
             .get(reqwest::header::WWW_AUTHENTICATE)
             .ok_or(Error::MissingAuthHeader("WWW-Authenticate"))
@@ -279,7 +279,7 @@ impl Client {
             }
         };
 
-        trace!("authenticate: login succeeded");
+        info!("authenticate: login succeeded");
         self.auth = Some(auth);
 
         Ok(self)
@@ -296,9 +296,9 @@ impl Client {
 
         let req = self.build_reqwest(Method::GET, url.clone());
 
-        trace!("Sending request to '{}'", url);
+        info!("Sending request to '{}'", url);
         let resp = req.send().await?;
-        trace!("GET '{:?}'", resp);
+        info!("GET '{:?}'", resp);
 
         let status = resp.status();
         match status {
@@ -367,11 +367,11 @@ mod tests {
     }
 
     // Testing for this situation to work:
-    // [TRACE dkregistry::v2::auth] Sending request to 'https://localhost:5000/v2/'
-    // [TRACE dkregistry::v2::auth] GET 'Response { url: "https://localhost:5000/v2/", status: 401, headers: {"content-type": "application/json; charset=utf-8", "docker-distribution-api-version": "registry/2.0", "www-authenticate": "Basic realm=\"Registry\"", "x-content-type-options": "nosniff", "date": "Thu, 18 Jun 2020 09:04:24 GMT", "content-length": "87"} }'
-    // [TRACE dkregistry::v2::auth] GET 'https://localhost:5000/v2/' status: 401
-    // [TRACE dkregistry::v2::auth] Token provider: Registry
-    // [TRACE dkregistry::v2::auth] login: token endpoint: Registry&scope=repository:cincinnati-ci/ocp-release-dev:pull
+    // [info dkregistry::v2::auth] Sending request to 'https://localhost:5000/v2/'
+    // [info dkregistry::v2::auth] GET 'Response { url: "https://localhost:5000/v2/", status: 401, headers: {"content-type": "application/json; charset=utf-8", "docker-distribution-api-version": "registry/2.0", "www-authenticate": "Basic realm=\"Registry\"", "x-content-type-options": "nosniff", "date": "Thu, 18 Jun 2020 09:04:24 GMT", "content-length": "87"} }'
+    // [info dkregistry::v2::auth] GET 'https://localhost:5000/v2/' status: 401
+    // [info dkregistry::v2::auth] Token provider: Registry
+    // [info dkregistry::v2::auth] login: token endpoint: Registry&scope=repository:cincinnati-ci/ocp-release-dev:pull
     // [ERROR graph_builder::graph] failed to fetch all release metadata
     // [ERROR graph_builder::graph] failed to parse url from string 'Registry&scope=repository:cincinnati-ci/ocp-release-dev:pull': relative URL without a base
     #[test]
