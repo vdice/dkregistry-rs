@@ -28,6 +28,8 @@ pub struct BearerAuth {
     expires_in: Option<u32>,
     issued_at: Option<String>,
     refresh_token: Option<String>,
+    #[serde(alias = "token")]
+    access_token: Option<String>
 }
 
 impl BearerAuth {
